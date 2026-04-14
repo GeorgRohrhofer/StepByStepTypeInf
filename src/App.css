@@ -1,0 +1,30 @@
+.app {
+  min-height: 100svh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.type-input {
+  display: flex;
+  gap: 0.75rem;
+  width: min(90vw, 40rem);
+}
+
+.type-input input {
+  flex: 1;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #c7ccd1;
+  border-radius: 0.5rem;
+  font: inherit;
+}
+
+.type-input button {
+  padding: 0.7rem 1rem;
+  border: 1px solid #1f2937;
+  border-radius: 0.5rem;
+  background: #1f2937;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
