@@ -1,5 +1,6 @@
 import './App.css'
 import { infereType } from './inference-engine/inference';
+import { replaceParamWithType } from './inference-engine/type-replace';
 import { parseTerm, getTerm } from './lambda-parser/parser'
 import type { Type } from './shared/types';
 
@@ -32,8 +33,14 @@ function handleSubmit(event: React.FormEvent) {
     }
 
     console.log(getTerm(parsed.value));
+    const term = replaceParamWithType(parsed.value);
 
-    const type = infereType(parsed.value);
+    if (term.isFailure) {
+        console.error('Error replacing parameters with types:', term.error);
+        return;
+    }
+
+    const type = infereType(term.value);
 
     if (type.isSuccess)
         console.log(getType(type.value));

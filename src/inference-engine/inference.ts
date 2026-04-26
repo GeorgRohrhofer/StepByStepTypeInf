@@ -26,3 +26,4 @@ export function betaReduce(term: Term): Result<Term, string> {
     
     return new Failure("Not implemented");
 }
+
