@@ -3,11 +3,51 @@
   padding: 1.5rem 1rem 3rem;
   display: flex;
   justify-content: center;
+  align-items: center;
   box-sizing: border-box;
 }
 
+.app.app--show-all {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  height: 100svh;
+  min-height: 100svh;
+  max-height: 100svh;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.app.app--show-all .app-inner {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app.app--show-all .app-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.15rem;
+}
+
+.app.app--show-all .type-input {
+  flex: 0 0 auto;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-top: 0.75rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid #e5e7eb;
+  background: #f3f4f6;
+  box-shadow: 0 -6px 16px rgba(15, 23, 42, 0.06);
+}
+
 .app-inner {
-  width: min(100%, 44rem);
+  width: 100%;
 }
 
 .app-inner h1 {
@@ -27,7 +67,8 @@
 .type-input {
   display: flex;
   gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  width: 70%;
+  margin: 0 auto 1.25rem;
 }
 
 .type-input input {
@@ -75,7 +116,7 @@
 }
 
 .step-viewer {
-  margin-top: 0.25rem;
+  margin: 0.25rem 0 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -223,6 +264,11 @@
 
 .step-card--stacked {
   flex-shrink: 0;
+}
+
+h1 {
+  font-size: xx-large;
+  text-align: center;
 }
 
 @media (max-width: 520px) {

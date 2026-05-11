@@ -260,27 +260,12 @@ function App() {
   }, [stepCount, lastIndex]);
 
   return (
-    <main className="app">
+    <main className={`app ${showAllSteps ? "app--show-all" : ""}`}>
       <div className="app-inner">
-        <h1>Step by step type inference</h1>
-        <form className="type-input" onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={"e.g. (\\x.x) y"}
-            aria-label="Lambda term"
-          />
-          <button type="submit">Run</button>
-        </form>
+        <div className="app-body">
+          <h1>Step-By-Step Type Inference</h1>
 
-        {error !== null && (
-          <div className="error-banner" role="alert">
-            {error}
-          </div>
-        )}
-
-        {currentStep !== null && (
+          {currentStep !== null && (
           <section
             className="step-viewer"
             aria-label="Solution steps"
@@ -372,7 +357,25 @@ function App() {
               </div>
             )}
           </section>
-        )}
+          )}
+
+          {error !== null && (
+            <div className="error-banner" role="alert">
+              {error}
+            </div>
+          )}
+        </div>
+
+        <form className="type-input" onSubmit={handleSubmit}>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={"e.g. (\\x.x) y"}
+            aria-label="Lambda term"
+          />
+          <button type="submit">Run</button>
+        </form>
       </div>
     </main>
   );
