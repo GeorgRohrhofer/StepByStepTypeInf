@@ -1,3 +1,4 @@
+import { LAMBDA_CHAR_ALT } from "./constants";
 import type { Term } from "../shared/types";
 
 export function getTerm(term: Term): string {
@@ -9,7 +10,7 @@ function formatTerm(term: Term, parentPrecedence: number): string {
     case "var":
       return term.name;
     case "abs": {
-      const rendered = `\\${term.param}.${formatTerm(term.body, 1)}`;
+      const rendered = `${LAMBDA_CHAR_ALT}${term.param}.${formatTerm(term.body, 1)}`;
       if (parentPrecedence > 1) {
         return `(${rendered})`;
       }

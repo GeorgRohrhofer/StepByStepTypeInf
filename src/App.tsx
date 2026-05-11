@@ -266,97 +266,97 @@ function App() {
           <h1>Step-By-Step Type Inference</h1>
 
           {currentStep !== null && (
-          <section
-            className="step-viewer"
-            aria-label="Solution steps"
-            aria-live="polite"
-          >
-            <div className="step-viewer-frame">
-              <button
-                type="button"
-                className="step-nav step-nav--prev"
-                onClick={goPrev}
-                disabled={viewIndex <= 0}
-                aria-label="Previous step"
-              >
-                ‹
-              </button>
-              <div className="step-viewer-main">
-                <article
-                  className="step-card step-card--current"
-                  key={viewIndex}
+            <section
+              className="step-viewer"
+              aria-label="Solution steps"
+              aria-live="polite"
+            >
+              <div className="step-viewer-frame">
+                <button
+                  type="button"
+                  className="step-nav step-nav--prev"
+                  onClick={goPrev}
+                  disabled={viewIndex <= 0}
+                  aria-label="Previous step"
                 >
-                  <h2 className="step-title">
-                    <span className="step-title-num">{viewIndex + 1}. </span>
-                    {currentStep.title}
-                  </h2>
-                  <div className="step-body">
-                    {currentStep.lines.map((line, j) => (
-                      <pre key={j} className="step-line">
-                        {line}
-                      </pre>
-                    ))}
-                  </div>
-                </article>
-                <div className="step-viewer-meta">
-                  <span className="step-counter">
-                    Step {viewIndex + 1} of {stepCount}
-                  </span>
-                  <label className="step-scrub">
-                    <span className="visually-hidden">Jump to step</span>
-                    <input
-                      type="range"
-                      min={0}
-                      max={lastIndex}
-                      value={viewIndex}
-                      onChange={(e) =>
-                        setStepIndex(Number.parseInt(e.target.value, 10))
-                      }
-                      aria-valuetext={`Step ${viewIndex + 1} of ${stepCount}`}
-                    />
-                  </label>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="step-nav step-nav--next"
-                onClick={goNext}
-                disabled={viewIndex >= lastIndex}
-                aria-label="Next step"
-              >
-                ›
-              </button>
-            </div>
-            <div className="step-viewer-footer">
-              <button
-                type="button"
-                className="step-show-all"
-                onClick={() => setShowAllSteps((v) => !v)}
-                aria-expanded={showAllSteps}
-              >
-                {showAllSteps ? "Hide all steps" : "Show all steps"}
-              </button>
-            </div>
-            {showAllSteps && (
-              <div className="step-all-list" aria-label="All solution steps">
-                {steps.map((step, i) => (
-                  <article className="step-card step-card--stacked" key={i}>
+                  ‹
+                </button>
+                <div className="step-viewer-main">
+                  <article
+                    className="step-card step-card--current"
+                    key={viewIndex}
+                  >
                     <h2 className="step-title">
-                      <span className="step-title-num">{i + 1}. </span>
-                      {step.title}
+                      <span className="step-title-num">{viewIndex + 1}. </span>
+                      {currentStep.title}
                     </h2>
                     <div className="step-body">
-                      {step.lines.map((line, j) => (
+                      {currentStep.lines.map((line, j) => (
                         <pre key={j} className="step-line">
                           {line}
                         </pre>
                       ))}
                     </div>
                   </article>
-                ))}
+                  <div className="step-viewer-meta">
+                    <span className="step-counter">
+                      Step {viewIndex + 1} of {stepCount}
+                    </span>
+                    <label className="step-scrub">
+                      <span className="visually-hidden">Jump to step</span>
+                      <input
+                        type="range"
+                        min={0}
+                        max={lastIndex}
+                        value={viewIndex}
+                        onChange={(e) =>
+                          setStepIndex(Number.parseInt(e.target.value, 10))
+                        }
+                        aria-valuetext={`Step ${viewIndex + 1} of ${stepCount}`}
+                      />
+                    </label>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="step-nav step-nav--next"
+                  onClick={goNext}
+                  disabled={viewIndex >= lastIndex}
+                  aria-label="Next step"
+                >
+                  ›
+                </button>
               </div>
-            )}
-          </section>
+              <div className="step-viewer-footer">
+                <button
+                  type="button"
+                  className="step-show-all"
+                  onClick={() => setShowAllSteps((v) => !v)}
+                  aria-expanded={showAllSteps}
+                >
+                  {showAllSteps ? "Hide all steps" : "Show all steps"}
+                </button>
+              </div>
+              {showAllSteps && (
+                <div className="step-all-list" aria-label="All solution steps">
+                  {steps.map((step, i) => (
+                    <article className="step-card step-card--stacked" key={i}>
+                      <h2 className="step-title">
+                        <span className="step-title-num">{i + 1}. </span>
+                        {step.title}
+                      </h2>
+                      <div className="step-body">
+                        {step.lines.map((line, j) => (
+                          <pre key={j} className="step-line">
+                            {line}
+                          </pre>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
           )}
 
           {error !== null && (
