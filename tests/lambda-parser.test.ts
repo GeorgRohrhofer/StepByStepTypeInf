@@ -1,4 +1,4 @@
-import { getTerm, parseTerm } from "../src/lambda-parser/parser";
+import { composeCombinatorTerm, getTerm, parseTerm } from "../src/lambda-parser/parser";
 
 type Case = { name: string; run: () => void };
 
@@ -10,6 +10,56 @@ const cases: Case[] = [
             assert(result.isSuccess, "expected parse success");
             if (result.isSuccess) {
                 assertDeepEqual(result.value, { kind: "var", name: "x" });
+            }
+        },
+    },
+    {
+        name: "parses multi-parameter abstraction as nested abstractions",
+        run: () => {
+            const result = parseTerm("\\x y.z");
+            assert(result.isSuccess, "expected parse success");
+            if (result.isSuccess) {
+                assertDeepEqual(result.value, {
+                    kind: "abs",
+                    param: "x",
+                    body: {
+                        kind: "abs",
+                        param: "y",
+                        body: { kind: "var", name: "z" },
+                    },
+                });
+            }
+        },
+    },
+    {
+        name: "parses bullet as composition combinator (•)",
+        run: () => {
+            const result = parseTerm("(•)");
+            assert(result.isSuccess, "expected parse success");
+            if (result.isSuccess) {
+                assertDeepEqual(result.value, composeCombinatorTerm());
+            }
+        },
+    },
+    {
+        name: "parses infix composition f • g as λx.f (g x)",
+        run: () => {
+            const result = parseTerm("f • g");
+            assert(result.isSuccess, "expected parse success");
+            if (result.isSuccess) {
+                assertDeepEqual(result.value, {
+                    kind: "abs",
+                    param: "x",
+                    body: {
+                        kind: "app",
+                        func: { kind: "var", name: "f" },
+                        arg: {
+                            kind: "app",
+                            func: { kind: "var", name: "g" },
+                            arg: { kind: "var", name: "x" },
+                        },
+                    },
+                });
             }
         },
     },

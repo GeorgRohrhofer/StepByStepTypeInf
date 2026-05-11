@@ -7,6 +7,86 @@ export function parseTerm(input: string): Result<Term, string> {
     return parser.parse();
 }
 
+const COMPOSE_CHAR = "\u{2022}";
+
+/** Haskell-style `(.)` / `(•)` : (b→c)→(a→b)→a→c as λf.λg.λx.f (g x) */
+export function composeCombinatorTerm(): Term {
+    const f = "f";
+    const g = "g";
+    const x = "x";
+    return {
+        kind: "abs",
+        param: f,
+        body: {
+            kind: "abs",
+            param: g,
+            body: {
+                kind: "abs",
+                param: x,
+                body: {
+                    kind: "app",
+                    func: { kind: "var", name: f },
+                    arg: {
+                        kind: "app",
+                        func: { kind: "var", name: g },
+                        arg: { kind: "var", name: x },
+                    },
+                },
+            },
+        },
+    };
+}
+
+function freeTermVars(term: Term, bound: Set<string> = new Set()): Set<string> {
+    if (term.kind === "var") {
+        return bound.has(term.name) ? new Set() : new Set([term.name]);
+    }
+
+    if (term.kind === "app") {
+        return new Set([...freeTermVars(term.func, bound), ...freeTermVars(term.arg, bound)]);
+    }
+
+    const next = new Set(bound);
+    next.add(term.param);
+    return freeTermVars(term.body, next);
+}
+
+/** `f • g`  ≡  λx. f (g x) with fresh x */
+function composeBinary(f: Term, g: Term): Term {
+    const used = new Set([...freeTermVars(f), ...freeTermVars(g)]);
+    const tryNames = ["x", "y", "z", "u", "v", "w"];
+    let param: string | undefined;
+    for (const n of tryNames) {
+        if (!used.has(n)) {
+            param = n;
+            break;
+        }
+    }
+
+    if (param === undefined) {
+        let i = 0;
+        while (used.has(`x${i}`)) {
+            i += 1;
+        }
+
+        param = `x${i}`;
+    }
+
+    return {
+        kind: "abs",
+        param,
+        body: {
+            kind: "app",
+            func: f,
+            arg: {
+                kind: "app",
+                func: g,
+                arg: { kind: "var", name: param },
+            },
+        },
+    };
+}
+
 class Parser {
     private readonly input: string;
     private index: number;
@@ -37,36 +117,70 @@ class Parser {
 
     private parseExpression(): Result<Term, string> {
         this.skipWhitespace();
-        if (this.currentChar() === "\\") {
+        if (this.currentChar() === "\\" || this.currentChar() === "\u{03BB}") {
             return this.parseAbstraction();
         }
-        return this.parseApplication();
+
+        const first = this.parseApplication();
+        if (!first.isSuccess) {
+            return first;
+        }
+
+        let term = first.value;
+        while (true) {
+            this.skipWhitespace();
+            if (this.currentChar() !== COMPOSE_CHAR) {
+                break;
+            }
+
+            this.consumeChar();
+            this.skipWhitespace();
+            const right = this.parseApplication();
+            if (!right.isSuccess) {
+                return right;
+            }
+
+            term = composeBinary(term, right.value);
+        }
+
+        return new Success(term);
     }
 
     private parseAbstraction(): Result<Term, string> {
         this.consumeChar();
-        this.skipWhitespace();
+        const params: string[] = [];
 
-        const param = this.readIdentifier();
-        if (param === null) {
-            return new Failure(`Expected parameter name at position ${this.index}`);
-        }
-
-        this.skipWhitespace();
-        if (this.currentChar() === ":") {
-            this.consumeChar();
-            const typeAnnotation = this.skipTypeAnnotation();
-            if (typeAnnotation.isFailure) {
-                return typeAnnotation;
-            }
+        while (true) {
             this.skipWhitespace();
+            const param = this.readIdentifier();
+            if (param === null) {
+                return new Failure(`Expected parameter name at position ${this.index}`);
+            }
+
+            params.push(param);
+            this.skipWhitespace();
+
+            if (this.currentChar() === ":") {
+                this.consumeChar();
+                const typeAnnotation = this.skipTypeAnnotation();
+                if (typeAnnotation.isFailure) {
+                    return typeAnnotation;
+                }
+                this.skipWhitespace();
+            }
+
+            if (this.currentChar() === ".") {
+                this.consumeChar();
+                break;
+            }
+
+            if (!isIdentifierStartChar(this.currentChar())) {
+                return new Failure(
+                    `Expected '.' or another parameter after '${param}' at position ${this.index}`,
+                );
+            }
         }
 
-        if (this.currentChar() !== ".") {
-            return new Failure(`Expected '.' after parameter '${param}' at position ${this.index}`);
-        }
-
-        this.consumeChar();
         this.skipWhitespace();
 
         if (this.isAtEnd()) {
@@ -74,16 +188,21 @@ class Parser {
         }
 
         const body = this.parseExpression();
-        if (body.isFailure) {
+        if (!body.isSuccess) {
             return body;
         }
 
-        return new Success({ kind: "abs", param, body: body.value });
+        let term: Term = body.value;
+        for (let i = params.length - 1; i >= 0; i--) {
+            term = { kind: "abs", param: params[i]!, body: term };
+        }
+
+        return new Success(term);
     }
 
     private parseApplication(): Result<Term, string> {
         const first = this.parseAtom();
-        if (first.isFailure) {
+        if (!first.isSuccess) {
             return first;
         }
 
@@ -99,7 +218,7 @@ class Parser {
             }
 
             const next = this.parseAtom();
-            if (next.isFailure) {
+            if (!next.isSuccess) {
                 return next;
             }
 
@@ -117,6 +236,11 @@ class Parser {
         this.skipWhitespace();
 
         const char = this.currentChar();
+        if (char === COMPOSE_CHAR) {
+            this.consumeChar();
+            return new Success(composeCombinatorTerm());
+        }
+
         if (char === "(") {
             this.consumeChar();
             const inner = this.parseExpression();
@@ -240,7 +364,7 @@ function isIdentifierStartChar(char: string | undefined): boolean {
         return false;
     }
 
-    return /[A-Za-z0-9_]/.test(char);
+    return /[A-Za-z0-9_]/.test(char) || char === "\u{00B7}";
 }
 
 function isIdentifierPartChar(char: string | undefined): boolean {
@@ -248,5 +372,5 @@ function isIdentifierPartChar(char: string | undefined): boolean {
         return false;
     }
 
-    return /[A-Za-z0-9_']/.test(char);
+    return /[A-Za-z0-9_']/.test(char) || char === "\u{00B7}";
 }
