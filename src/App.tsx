@@ -14,40 +14,88 @@ type DisplayStep = {
   lines: string[];
 };
 
-function inferTraceToDisplay(step: InferenceTraceStep): DisplayStep {
+function expandInferenceTraceStep(step: InferenceTraceStep): DisplayStep[] {
   switch (step.kind) {
     case 'environment':
-      return {
-        title: 'Give each free variable a fresh type metavariable',
-        lines: step.bindings.map((b) => `${b.name} : ${b.type}`),
-      };
+      return [
+        {
+          title: 'Context — which names are free in the term?',
+          lines: [`Free variables: ${step.bindings.map((b) => b.name).join(', ')}`],
+        },
+        {
+          title: 'Context — give each free variable a fresh type metavariable',
+          lines: step.bindings.map((b) => `${b.name} : ${b.type}`),
+        },
+      ];
+    case 'var_lookup':
+      return [
+        {
+          title: 'Variable — read its type from the context',
+          lines: [`${step.name} : ${step.type}`],
+        },
+      ];
     case 'assume':
-      return {
-        title:
-          step.source === 'fresh'
-            ? `λ-abstraction: parameter ${step.param} gets a fresh metavariable`
-            : `λ-abstraction: parameter ${step.param} uses annotated type`,
-        lines: [`${step.param} : ${step.type}`],
-      };
-    case 'app_constraint':
-      return {
-        title: 'Application: unify function type with (argument type → fresh result)',
-        lines: [
-          `Inferred function type: ${step.funcType}`,
-          `Inferred argument type: ${step.argType}`,
-          `Fresh result metavariable: ${step.freshResult}`,
-        ],
-      };
+      return [
+        {
+          title:
+            step.source === 'fresh'
+              ? 'λ-abstraction — invent a metavariable for the parameter type'
+              : 'λ-abstraction — use the annotated parameter type',
+          lines: [`Add to the context:  ${step.param} : ${step.type}`],
+        },
+      ];
+    case 'abs_body_next':
+      return [
+        {
+          title: 'λ-abstraction — move inward to the body',
+          lines: [
+            `With ${step.param} in the context, infer the body under that extended context.`,
+          ],
+        },
+      ];
+    case 'app_subterms_typed':
+      return [
+        {
+          title: 'Application — you already inferred both sides',
+          lines: [
+            `Function position has type:  ${step.funcType}`,
+            `Argument position has type:   ${step.argType}`,
+          ],
+        },
+      ];
+    case 'app_rule_constraint':
+      return [
+        {
+          title: 'Application — write the constraint the typing rule gives',
+          lines: [
+            `The function type must be an arrow whose domain matches the argument type and whose codomain is the type of the whole application.`,
+            `Introduce a fresh metavariable ${step.freshResult} for that result type.`,
+            `Constraint to solve:    ${step.funcType}  =  (${step.argType} → ${step.freshResult})`,
+          ],
+        },
+      ];
     case 'unify':
-      return {
-        title: 'Unify — extend substitution',
-        lines: [`${step.lhs} := ${step.rhs}`],
-      };
+      return [
+        {
+          title: 'Unification — state an equation between types',
+          lines: [`${step.lhs}  =  ${step.rhs}`],
+        },
+        {
+          title: 'Unification — record the metavariable solution (extend σ)',
+          lines: [`${step.lhs}  ↦  ${step.rhs}`, '(Occurs check passed; no infinite type.)'],
+        },
+      ];
     case 'final':
-      return {
-        title: 'Principal type (after applying substitution)',
-        lines: [step.type],
-      };
+      return [
+        {
+          title: 'Finish — apply the substitution to the inferred type',
+          lines: ['Collapse metavariables using the substitution σ built above.'],
+        },
+        {
+          title: 'Principal type of the term',
+          lines: [step.type],
+        },
+      ];
   }
 }
 
@@ -61,21 +109,38 @@ function runPipeline(input: string): { steps: DisplayStep[]; error: string | nul
 
   const parsedTerm = parsed.value;
   steps.push({
-    title: 'Parse',
+    title: 'Parse — read the λ-term',
+    lines: [
+      'Treat the input as a tree of variables, applications (M N), and abstractions (λx.M).',
+    ],
+  });
+  steps.push({
+    title: 'Parse — abstract syntax tree',
     lines: [getTerm(parsedTerm)],
   });
 
   const { term: afterBeta, steps: betaSteps } = collectBetaReductionSteps(parsedTerm);
   if (betaSteps.length === 0) {
     steps.push({
-      title: 'β-reduction',
-      lines: ['No redex in this term (already a normal form, or no applicable redex).'],
+      title: 'β-reduction — look for a redex',
+      lines: [
+        'A redex is a subterm (λx.M) N. If none exists, there is nothing to contract.',
+        'No redex here (already a normal form, or no applicable redex).',
+      ],
     });
   } else {
     for (let i = 0; i < betaSteps.length; i++) {
       const s = betaSteps[i];
+      const n = betaSteps.length;
       steps.push({
-        title: `β-reduction (step ${i + 1} of ${betaSteps.length})`,
+        title: `β-reduction (${i + 1}/${n}) — locate the redex`,
+        lines: [
+          'Leftmost-outermost: find the first (λx.M) N from the left.',
+          `Before:  ${getTerm(s.from)}`,
+        ],
+      });
+      steps.push({
+        title: `β-reduction (${i + 1}/${n}) — contract one step`,
         lines: [`${getTerm(s.from)}  →  ${getTerm(s.to)}`],
       });
     }
@@ -89,13 +154,21 @@ function runPipeline(input: string): { steps: DisplayStep[]; error: string | nul
 
   const renamedTerm = renamed.value;
   steps.push({
-    title: 'Rename bound variables to type metavariables (preparation for inference)',
+    title: 'Rename — prepare for type inference',
+    lines: [
+      'Bound parameters are renamed to metavariable-style names so each binder lines up with a type variable in the algorithm.',
+    ],
+  });
+  steps.push({
+    title: 'Rename — term passed to inference',
     lines: [getTerm(renamedTerm)],
   });
 
   const inferred = infereTypeWithTrace(renamedTerm);
   for (const traceStep of inferred.steps) {
-    steps.push(inferTraceToDisplay(traceStep));
+    for (const d of expandInferenceTraceStep(traceStep)) {
+      steps.push(d);
+    }
   }
 
   if (inferred.outcome === "error") {
@@ -197,6 +270,7 @@ function App() {
                 disabled={viewIndex <= 0}
                 aria-label="Previous step"
               >
+                ‹
               </button>
               <div className="step-viewer-main">
                 <article className="step-card step-card--current" key={viewIndex}>

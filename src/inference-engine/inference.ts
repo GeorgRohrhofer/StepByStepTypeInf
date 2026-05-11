@@ -46,14 +46,21 @@ function occursInTypeVar(name: string, t: Type): boolean {
 
 export type InferenceTraceStep =
     | { kind: "environment"; bindings: { name: string; type: string }[] }
+    | { kind: "var_lookup"; name: string; type: string }
     | {
           kind: "assume";
           param: string;
           type: string;
           source: "annotation" | "fresh";
       }
+    | { kind: "abs_body_next"; param: string }
     | {
-          kind: "app_constraint";
+          kind: "app_subterms_typed";
+          funcType: string;
+          argType: string;
+      }
+    | {
+          kind: "app_rule_constraint";
           funcType: string;
           argType: string;
           freshResult: string;
@@ -125,6 +132,11 @@ function inferW(
             return new Failure(`Unbound variable '${term.name}'`);
         }
 
+        trace?.({
+            kind: "var_lookup",
+            name: term.name,
+            type: formatInferredType(t),
+        });
         return new Success(t);
     }
 
@@ -138,6 +150,7 @@ function inferW(
         });
         const env2 = new Map(env);
         env2.set(term.param, dom);
+        trace?.({ kind: "abs_body_next", param: term.param });
         const bodyResult = inferW(term.body, env2, trace);
         if (bodyResult.isSuccess) {
             return new Success({
@@ -162,10 +175,17 @@ function inferW(
 
     const ret = freshMetaType();
     const freshResultName = ret.kind === "var" ? ret.name : formatInferredType(ret);
+    const funcTyStr = formatInferredType(funcT.value);
+    const argTyStr = formatInferredType(argT.value);
     trace?.({
-        kind: "app_constraint",
-        funcType: formatInferredType(funcT.value),
-        argType: formatInferredType(argT.value),
+        kind: "app_subterms_typed",
+        funcType: funcTyStr,
+        argType: argTyStr,
+    });
+    trace?.({
+        kind: "app_rule_constraint",
+        funcType: funcTyStr,
+        argType: argTyStr,
         freshResult: freshResultName,
     });
     const u = unifyTypes(funcT.value, { kind: "fun", from: argT.value, to: ret }, trace);
