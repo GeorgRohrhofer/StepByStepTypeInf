@@ -1,13 +1,21 @@
-import './App.css'
+import "./App.css";
 import {
   collectBetaReductionSteps,
   infereTypeWithTrace,
   type InferenceTraceStep,
-} from './inference-engine/inference';
-import { replaceParamWithType, resetTypeNameCounter } from './inference-engine/type-replace';
-import { parseTerm, getTerm } from './lambda-parser/parser'
-import { Failure } from './shared/errors';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+} from "./inference-engine/inference";
+import {
+  replaceParamWithType,
+  resetTypeNameCounter,
+} from "./inference-engine/type-replace";
+import { parseTerm, getTerm } from "./lambda-parser/parser";
+import { Failure } from "./shared/errors";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type SubmitEventHandler,
+} from "react";
 
 type DisplayStep = {
   title: string;
@@ -16,57 +24,59 @@ type DisplayStep = {
 
 function expandInferenceTraceStep(step: InferenceTraceStep): DisplayStep[] {
   switch (step.kind) {
-    case 'environment':
+    case "environment":
       return [
         {
-          title: 'Context — which names are free in the term?',
-          lines: [`Free variables: ${step.bindings.map((b) => b.name).join(', ')}`],
+          title: "Context — Which Names are Free in the Term?",
+          lines: [
+            `Free Variables: ${step.bindings.map((b) => b.name).join(", ")}`,
+          ],
         },
         {
-          title: 'Context — give each free variable a fresh type metavariable',
+          title: "Context — Give Each Free Variable a Fresh Type Metavariable",
           lines: step.bindings.map((b) => `${b.name} : ${b.type}`),
         },
       ];
-    case 'var_lookup':
+    case "var_lookup":
       return [
         {
-          title: 'Variable — read its type from the context',
+          title: "Variable — Read Its Type from the Context",
           lines: [`${step.name} : ${step.type}`],
         },
       ];
-    case 'assume':
+    case "assume":
       return [
         {
           title:
-            step.source === 'fresh'
-              ? 'λ-abstraction — invent a metavariable for the parameter type'
-              : 'λ-abstraction — use the annotated parameter type',
+            step.source === "fresh"
+              ? "λ-Abstraction — Invent a Metavariable for the Parameter Type"
+              : "λ-Abstraction — Use the Annotated Parameter Type",
           lines: [`Add to the context:  ${step.param} : ${step.type}`],
         },
       ];
-    case 'abs_body_next':
+    case "abs_body_next":
       return [
         {
-          title: 'λ-abstraction — move inward to the body',
+          title: "λ-Abstraction — Move Inward to the Body",
           lines: [
             `With ${step.param} in the context, infer the body under that extended context.`,
           ],
         },
       ];
-    case 'app_subterms_typed':
+    case "app_subterms_typed":
       return [
         {
-          title: 'Application — you already inferred both sides',
+          title: "Application — You Already Inferred Both Sides",
           lines: [
             `Function position has type:  ${step.funcType}`,
             `Argument position has type:   ${step.argType}`,
           ],
         },
       ];
-    case 'app_rule_constraint':
+    case "app_rule_constraint":
       return [
         {
-          title: 'Application — write the constraint the typing rule gives',
+          title: "Application — Write the Constraint the Typing Rule Gives",
           lines: [
             `The function type must be an arrow whose domain matches the argument type and whose codomain is the type of the whole application.`,
             `Introduce a fresh metavariable ${step.freshResult} for that result type.`,
@@ -74,32 +84,41 @@ function expandInferenceTraceStep(step: InferenceTraceStep): DisplayStep[] {
           ],
         },
       ];
-    case 'unify':
+    case "unify":
       return [
         {
-          title: 'Unification — state an equation between types',
+          title: "Unification — State an Equation between Types",
           lines: [`${step.lhs}  =  ${step.rhs}`],
         },
         {
-          title: 'Unification — record the metavariable solution (extend σ)',
-          lines: [`${step.lhs}  ↦  ${step.rhs}`, '(Occurs check passed; no infinite type.)'],
+          title: "Unification — Record the Metavariable Solution (Extend σ)",
+          lines: [
+            `${step.lhs}  ↦  ${step.rhs}`,
+            "(Occurs check passed; no infinite type.)",
+          ],
         },
       ];
-    case 'final':
+    case "final":
       return [
         {
-          title: 'Finish — apply the substitution to the inferred type',
-          lines: ['Collapse metavariables using the substitution σ built above.'],
+          title: "Finish — Apply the Substitution to the Inferred Type",
+          lines: [
+            "Collapse metavariables using the substitution σ built above.",
+          ],
         },
         {
-          title: 'Principal type of the term',
+          title: "Principal Type of the Term",
           lines: [step.type],
         },
       ];
   }
 }
 
-function runPipeline(input: string): { steps: DisplayStep[]; error: string | null } {
+function runPipeline(input: string): {
+  steps: DisplayStep[];
+  error: string | null;
+} {
+  const startTime = performance.now();
   const steps: DisplayStep[] = [];
 
   const parsed = parseTerm(input);
@@ -109,23 +128,24 @@ function runPipeline(input: string): { steps: DisplayStep[]; error: string | nul
 
   const parsedTerm = parsed.value;
   steps.push({
-    title: 'Parse — read the λ-term',
+    title: "Parse — Read the λ-Term",
     lines: [
-      'Treat the input as a tree of variables, applications (M N), and abstractions (λx.M).',
+      "Treat the input as a tree of variables, applications (M N), and abstractions (λx.M).",
     ],
   });
   steps.push({
-    title: 'Parse — abstract syntax tree',
+    title: "Parse — Abstract Syntax Tree",
     lines: [getTerm(parsedTerm)],
   });
 
-  const { term: afterBeta, steps: betaSteps } = collectBetaReductionSteps(parsedTerm);
+  const { term: afterBeta, steps: betaSteps } =
+    collectBetaReductionSteps(parsedTerm);
   if (betaSteps.length === 0) {
     steps.push({
-      title: 'β-reduction — look for a redex',
+      title: "β-Reduction — Look for a Redex",
       lines: [
-        'A redex is a subterm (λx.M) N. If none exists, there is nothing to contract.',
-        'No redex here (already a normal form, or no applicable redex).',
+        "A redex is a subterm (λx.M) N. If none exists, there is nothing to contract.",
+        "No redex here (already a normal form, or no applicable redex).",
       ],
     });
   } else {
@@ -133,14 +153,14 @@ function runPipeline(input: string): { steps: DisplayStep[]; error: string | nul
       const s = betaSteps[i];
       const n = betaSteps.length;
       steps.push({
-        title: `β-reduction (${i + 1}/${n}) — locate the redex`,
+        title: `β-Reduction (${i + 1}/${n}) — Locate the Redex`,
         lines: [
-          'Leftmost-outermost: find the first (λx.M) N from the left.',
+          "Leftmost-outermost: find the first (λx.M) N from the left.",
           `Before:  ${getTerm(s.from)}`,
         ],
       });
       steps.push({
-        title: `β-reduction (${i + 1}/${n}) — contract one step`,
+        title: `β-Reduction (${i + 1}/${n}) — Contract One Step`,
         lines: [`${getTerm(s.from)}  →  ${getTerm(s.to)}`],
       });
     }
@@ -154,13 +174,13 @@ function runPipeline(input: string): { steps: DisplayStep[]; error: string | nul
 
   const renamedTerm = renamed.value;
   steps.push({
-    title: 'Rename — prepare for type inference',
+    title: "Rename — Prepare for Type Inference",
     lines: [
-      'Bound parameters are renamed to metavariable-style names so each binder lines up with a type variable in the algorithm.',
+      "Bound parameters are renamed to metavariable-style names so each binder lines up with a type variable in the algorithm.",
     ],
   });
   steps.push({
-    title: 'Rename — term passed to inference',
+    title: "Rename — Term Passed to Inference",
     lines: [getTerm(renamedTerm)],
   });
 
@@ -175,11 +195,13 @@ function runPipeline(input: string): { steps: DisplayStep[]; error: string | nul
     return { steps, error: inferred.error };
   }
 
+  console.log(`Time taken: ${performance.now() - startTime}ms`);
+
   return { steps, error: null };
 }
 
 function App() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [steps, setSteps] = useState<DisplayStep[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
@@ -201,14 +223,14 @@ function App() {
     setStepIndex((i) => Math.min(lastIndex, i + 1));
   }, [lastIndex]);
 
-  function handleSubmit(event: FormEvent) {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (event) => {
     event.preventDefault();
     const { steps: next, error: err } = runPipeline(input);
     setSteps(next);
     setError(err);
     setStepIndex(0);
     setShowAllSteps(false);
-  }
+  };
 
   useEffect(() => {
     if (stepCount === 0) {
@@ -233,8 +255,8 @@ function App() {
       }
     }
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, [stepCount, lastIndex]);
 
   return (
@@ -246,7 +268,7 @@ function App() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={'e.g. (\\x.x) y'}
+            placeholder={"e.g. (\\x.x) y"}
             aria-label="Lambda term"
           />
           <button type="submit">Run</button>
@@ -275,11 +297,12 @@ function App() {
                 ‹
               </button>
               <div className="step-viewer-main">
-                <article className="step-card step-card--current" key={viewIndex}>
+                <article
+                  className="step-card step-card--current"
+                  key={viewIndex}
+                >
                   <h2 className="step-title">
-                    <span className="step-title-num">
-                      {viewIndex + 1}.{' '}
-                    </span>
+                    <span className="step-title-num">{viewIndex + 1}. </span>
                     {currentStep.title}
                   </h2>
                   <div className="step-body">
@@ -326,14 +349,11 @@ function App() {
                 onClick={() => setShowAllSteps((v) => !v)}
                 aria-expanded={showAllSteps}
               >
-                {showAllSteps ? 'Hide all steps' : 'Show all steps'}
+                {showAllSteps ? "Hide all steps" : "Show all steps"}
               </button>
             </div>
             {showAllSteps && (
-              <div
-                className="step-all-list"
-                aria-label="All solution steps"
-              >
+              <div className="step-all-list" aria-label="All solution steps">
                 {steps.map((step, i) => (
                   <article className="step-card step-card--stacked" key={i}>
                     <h2 className="step-title">
@@ -355,7 +375,7 @@ function App() {
         )}
       </div>
     </main>
-  )
+  );
 }
 
-export default App
+export default App;

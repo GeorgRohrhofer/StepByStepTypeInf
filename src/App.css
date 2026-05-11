@@ -101,7 +101,9 @@
   align-self: center;
   padding: 0.35rem 0;
   min-height: 7.5rem;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
 }
 
 .step-nav:hover:not(:disabled) {
@@ -138,7 +140,6 @@
   padding: 0.65rem 1rem;
   font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: #374151;
   background: #f3f4f6;
@@ -155,7 +156,8 @@
 
 .step-line {
   margin: 0 0 0.5rem;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-family:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
   font-size: 0.88rem;
   line-height: 1.45;
   white-space: pre-wrap;
@@ -203,7 +205,9 @@
   font: inherit;
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.12s ease, border-color 0.12s ease;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
 }
 
 .step-show-all:hover {
