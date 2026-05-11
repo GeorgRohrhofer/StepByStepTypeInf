@@ -1,8 +1,8 @@
 export type Result<T, E> = Success<T> | Failure<E>;
 
 export class Success<T> {
-    readonly isSuccess: true = true;
-    readonly isFailure: false = false;
+    readonly isSuccess = true;
+    readonly isFailure = false;
 
     public readonly value: T;
 
@@ -13,8 +13,8 @@ export class Success<T> {
 }
 
 export class Failure<E> {
-    readonly isSuccess: false = false;
-    readonly isFailure: true = true;
+    readonly isSuccess = false;
+    readonly isFailure = true;
 
     public readonly error: E;
  

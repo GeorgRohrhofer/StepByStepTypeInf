@@ -191,8 +191,11 @@ function App() {
   const currentStep = stepCount > 0 ? steps[viewIndex] : null;
 
   const goPrev = useCallback(() => {
-    setStepIndex((i) => Math.max(0, i - 1));
-  }, []);
+    setStepIndex((i) => {
+      const clamped = Math.min(Math.max(0, i), lastIndex);
+      return Math.max(0, clamped - 1);
+    });
+  }, [lastIndex]);
 
   const goNext = useCallback(() => {
     setStepIndex((i) => Math.min(lastIndex, i + 1));
@@ -208,10 +211,6 @@ function App() {
   }
 
   useEffect(() => {
-    setStepIndex((i) => Math.min(Math.max(0, i), lastIndex));
-  }, [lastIndex]);
-
-  useEffect(() => {
     if (stepCount === 0) {
       return;
     }
@@ -224,7 +223,10 @@ function App() {
 
       if (e.key === "ArrowLeft") {
         e.preventDefault();
-        setStepIndex((i) => Math.max(0, i - 1));
+        setStepIndex((i) => {
+          const clamped = Math.min(Math.max(0, i), lastIndex);
+          return Math.max(0, clamped - 1);
+        });
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         setStepIndex((i) => Math.min(lastIndex, i + 1));

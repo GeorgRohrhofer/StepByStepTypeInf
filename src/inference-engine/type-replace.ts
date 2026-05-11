@@ -1,7 +1,7 @@
 import { Failure, Success, type Result } from "../shared/errors";
 import type { Term } from "../shared/types";
 
-var typeCounter = 0;
+let typeCounter = 0;
 
 export function resetTypeNameCounter(): void {
     typeCounter = 0;
