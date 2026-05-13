@@ -1,14 +1,17 @@
 import { Failure, Success, type Result } from "../shared/errors";
 import type { Term } from "../shared/types";
+import {
+  LAMBDA_CHAR,
+  LAMBDA_CHAR_ALT,
+  COMPOSE_CHAR,
+  COMPOSE_CHAR_ALT,
+} from "./constants";
 export { getTerm } from "./formatter";
 
 export function parseTerm(input: string): Result<Term, string> {
   const parser = new Parser(input);
   return parser.parse();
 }
-
-const COMPOSE_CHAR = "°";
-const COMPOSE_CHAR_ALT = "\u{2022}"; // •
 
 /** `(•)` : λf.λg.λx.f (g x) */
 export function composeCombinatorTerm(): Term {
@@ -123,7 +126,10 @@ class Parser {
 
   private parseExpression(): Result<Term, string> {
     this.skipWhitespace();
-    if (this.currentChar() === "\\" || this.currentChar() === "\u{03BB}") {
+    if (
+      this.currentChar() === LAMBDA_CHAR ||
+      this.currentChar() === LAMBDA_CHAR_ALT
+    ) {
       return this.parseAbstraction();
     }
 
