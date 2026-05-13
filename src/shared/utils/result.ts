@@ -1,3 +1,11 @@
+// Shared / Utils layer.
+//
+// `Result<T, E>` plus its constructors are pure, framework-agnostic helpers
+// that every feature service can depend on. They have no React knowledge,
+// no domain knowledge, and no side effects, so they live under
+// `shared/utils/` (the spec's bucket for "pure helper functions") rather
+// than inside any feature.
+
 export type Result<T, E> = Success<T> | Failure<E>;
 
 export class Success<T> {

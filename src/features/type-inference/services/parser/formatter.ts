@@ -1,5 +1,11 @@
+// Service layer / parser submodule.
+//
+// Pretty-printer for `Term`. Pure function — no React, no I/O, no shared
+// mutable state. Lives under `services/parser/` because it is the inverse
+// of the parser and shares its character constants.
+
 import { LAMBDA_CHAR_ALT } from "./constants";
-import type { Term } from "../shared/types";
+import type { Term } from "../../types";
 
 export function getTerm(term: Term): string {
   return formatTerm(term, 0);

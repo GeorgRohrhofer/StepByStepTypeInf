@@ -1,5 +1,13 @@
-import { Failure, Success, type Result } from "../shared/errors";
-import type { Term } from "../shared/types";
+// Service layer / parser submodule.
+//
+// Lambda-calculus parser. Pure function exposed via `parseTerm`; the
+// `Parser` class is intentionally not exported. Business logic is unchanged
+// from the previous `src/lambda-parser/parser.ts` — only imports were
+// updated to reach the new domain types (`Term`) and shared `Result`
+// utilities.
+
+import { Failure, Success, type Result } from "../../../../shared/utils/result";
+import type { Term } from "../../types";
 import {
   LAMBDA_CHAR,
   LAMBDA_CHAR_ALT,

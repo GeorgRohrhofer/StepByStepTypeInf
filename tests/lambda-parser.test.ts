@@ -2,7 +2,7 @@ import {
   composeCombinatorTerm,
   getTerm,
   parseTerm,
-} from "../src/lambda-parser/parser";
+} from "../src/features/type-inference/services/parser";
 
 type Case = { name: string; run: () => void };
 

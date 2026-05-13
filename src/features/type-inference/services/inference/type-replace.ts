@@ -1,5 +1,21 @@
-import { Failure, Success, type Result } from "../shared/errors";
-import type { Term } from "../shared/types";
+// Service layer / inference submodule.
+//
+// Renames bound parameters to fresh "tN" names so each binder lines up with
+// a type metavariable in the algorithm. Logic is unchanged; only imports
+// were updated for the new locations of `Result` and `Term`.
+//
+// NOTE (architectural smell, preserved on purpose): the fresh-name counter
+// is module-scoped mutable state. The AGENTS.md "Avoid Shared Module State
+// for Request Data" guideline argues for instance-scoped state instead.
+// The user explicitly forbade business-logic changes in this refactor, so
+// the smell is preserved and flagged here for follow-up.
+
+import {
+  Failure,
+  Success,
+  type Result,
+} from "../../../../shared/utils/result";
+import type { Term } from "../../types";
 
 let typeCounter = 0;
 

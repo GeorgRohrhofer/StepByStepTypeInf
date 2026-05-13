@@ -1,5 +1,17 @@
-import { Failure, Success, type Result } from "../shared/errors";
-import type { Term, Type } from "../shared/types";
+// Service layer / inference submodule.
+//
+// Hindley–Milner-style W algorithm, β-reduction, and trace collection.
+// Pure functions exposed to the pipeline; the only state involved is the
+// internal substitution and meta-id counter, which are reset on each entry.
+//
+// NOTE (preserved smell, see AGENTS.md "Avoid Shared Module State for
+// Request Data"): `inferSubst` and `inferMetaId` are module-scoped mutable
+// state. They are reset at every public entry point, but concurrent
+// invocations would still clash. Left as-is per the "do not change
+// business logic" constraint of this refactor.
+
+import { Failure, Success, type Result } from "../../../../shared/utils/result";
+import type { Term, Type } from "../../types";
 
 let inferSubst: Map<string, Type> = new Map();
 let inferMetaId = 0;
