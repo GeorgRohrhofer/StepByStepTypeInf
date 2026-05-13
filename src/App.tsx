@@ -438,18 +438,18 @@ function App() {
                 <code className="help-menu-code">(\x.x) y</code>).
               </li>
               <li>
-                Press <strong>Run</strong> to walk through parsing,
-                β-reduction (when applicable), renaming, and type inference.
+                Press <strong>Run</strong> to walk through parsing, β-reduction
+                (when applicable), renaming, and type inference.
               </li>
               <li>
                 After a run, use the side arrows or the slider to move between
-                steps. When focus is not in the input, you can also use the
-                left and right arrow keys.
+                steps. When focus is not in the input, you can also use the left
+                and right arrow keys.
               </li>
               <li>
-                <strong>Show all steps</strong> (under the trace) opens the
-                full walkthrough in one scrollable list; choose it again to
-                collapse back to one step at a time.
+                <strong>Show all steps</strong> (under the trace) opens the full
+                walkthrough in one scrollable list; choose it again to collapse
+                back to one step at a time.
               </li>
             </ol>
             <h4 className="help-menu-subtitle">Syntax and symbols</h4>
@@ -470,7 +470,9 @@ function App() {
                 <dt>
                   <code className="help-menu-code">.</code>
                 </dt>
-                <dd>Ends the parameter list and begins the abstraction body.</dd>
+                <dd>
+                  Ends the parameter list and begins the abstraction body.
+                </dd>
               </div>
               <div className="help-menu-symbol-row">
                 <dt>
@@ -492,8 +494,9 @@ function App() {
               <div className="help-menu-symbol-row">
                 <dt>Space</dt>
                 <dd>
-                  Function application: <code className="help-menu-code">M N</code>{" "}
-                  applies <code className="help-menu-code">M</code> to{" "}
+                  Function application:{" "}
+                  <code className="help-menu-code">M N</code> applies{" "}
+                  <code className="help-menu-code">M</code> to{" "}
                   <code className="help-menu-code">N</code>. Chains associate to
                   the left: <code className="help-menu-code">M N P</code> is{" "}
                   <code className="help-menu-code">(M N) P</code>.
@@ -505,10 +508,12 @@ function App() {
                   <code className="help-menu-code">•</code>
                 </dt>
                 <dd>
-                  Binary composition: <code className="help-menu-code">f ° g</code>{" "}
-                  (or with <code className="help-menu-code">•</code>) means{" "}
-                  <code className="help-menu-code">λx. f (g x)</code> with a fresh
-                  parameter name <code className="help-menu-code">x</code>.
+                  Binary composition:{" "}
+                  <code className="help-menu-code">f ° g</code> (or with{" "}
+                  <code className="help-menu-code">•</code>) means{" "}
+                  <code className="help-menu-code">λx. f (g x)</code> with a
+                  fresh parameter name <code className="help-menu-code">x</code>
+                  .
                 </dd>
               </div>
               <div className="help-menu-symbol-row">
@@ -519,8 +524,8 @@ function App() {
                 </dt>
                 <dd>
                   The compose combinator:{" "}
-                  <code className="help-menu-code">λf.λg.λx.f (g x)</code> (same as
-                  parenthesized <code className="help-menu-code">(•)</code>).
+                  <code className="help-menu-code">λf.λg.λx.f (g x)</code> (same
+                  as parenthesized <code className="help-menu-code">(•)</code>).
                 </dd>
               </div>
             </dl>
